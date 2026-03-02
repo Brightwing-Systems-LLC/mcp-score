@@ -5,7 +5,7 @@ description = "Score your MCP server's quality before publishing"
 requires-python = ">=3.12"
 license = "MIT"
 dependencies = [
-    "mcp-scoring-engine>=0.1.0",
+    "mcp-scoring-engine>=0.2.0",
     "click>=8.0",
     "rich>=13.0",
 ]
