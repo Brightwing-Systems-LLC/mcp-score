@@ -22,10 +22,10 @@ def sample_result() -> ScoreResult:
         composite_score=82,
         grade="B",
         score_type="full",
-        schema_docs_score=75,
+        schema_quality_score=75,
         protocol_score=90,
         reliability_score=80,
-        maintenance_score=68,
+        docs_maintenance_score=68,
         security_score=85,
         flags=[
             Flag(
@@ -82,9 +82,13 @@ def sample_result() -> ScoreResult:
 
 @pytest.fixture
 def partial_result() -> ScoreResult:
-    """A partial ScoreResult with limited data."""
+    """A partial ScoreResult with limited data.
+
+    Per scoring engine v0.3.0+, partial servers get composite_score=None
+    (no grade) because weight normalization inflates scores for data-poor servers.
+    """
     return ScoreResult(
-        composite_score=65,
+        composite_score=None,
         grade="",
         score_type="partial",
         security_score=65,

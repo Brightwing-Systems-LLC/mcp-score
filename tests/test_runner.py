@@ -115,7 +115,7 @@ class TestRunScore:
         )
         result = run_score("github:owner/repo")
         assert isinstance(result, ScoreResult)
-        assert result.schema_docs_score is not None
+        assert result.schema_quality_score is not None
         assert result.protocol_score is None
         mock_analyze.assert_called_once_with("https://github.com/owner/repo")
 
@@ -135,7 +135,7 @@ class TestRunScore:
             repo_url="github:owner/repo",
         )
         assert result.protocol_score is not None
-        assert result.schema_docs_score is not None
+        assert result.schema_quality_score is not None
 
     @patch("mcp_scoring_engine.probes.protocol.deep_probe_server")
     def test_reliability_from_probe(self, mock_probe):

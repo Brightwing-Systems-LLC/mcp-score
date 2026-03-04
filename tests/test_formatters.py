@@ -58,13 +58,12 @@ class TestTerminalFormatter:
         assert "MCP Server Score Report" in output
         assert "awesome-mcp-server" in output
         assert "82" in output
-        assert "Schema & Documentation" in output
+        assert "Schema Quality" in output
         assert "Protocol Compliance" in output
 
     def test_partial_result(self, partial_result):
         output = format_terminal(partial_result)
-        assert "65" in output
-        assert "Partial score" in output
+        assert "No score computed" in output
 
     def test_empty_result(self, empty_result):
         output = format_terminal(empty_result)
@@ -100,9 +99,27 @@ class TestTerminalFormatter:
         assert "Static Analysis" in output
         assert "Schema Completeness: 85/100" in output
 
-    def test_footer(self, sample_result):
+    def test_footer_has_cta(self, sample_result):
         output = format_terminal(sample_result)
+        assert "mcpscoreboard.com/build" in output
         assert "patchworkmcp.com" in output
+
+    def test_enhanced_weights(self):
+        result = ScoreResult(
+            composite_score=80,
+            grade="B",
+            score_type="enhanced",
+            schema_quality_score=75,
+            protocol_score=85,
+            reliability_score=80,
+            docs_maintenance_score=70,
+            security_score=90,
+            agent_usability_score=78,
+            server_info=ServerInfo(name="test"),
+        )
+        output = format_terminal(result)
+        assert "Agent Usability" in output
+        assert "15%" in output
 
 
 class TestJsonFormatter:
@@ -132,11 +149,29 @@ class TestJsonFormatter:
         output = format_json(sample_result)
         data = json.loads(output)
         cats = data["score"]["categories"]
-        assert cats["schema_docs"] == 75
+        assert cats["schema_quality"] == 75
         assert cats["protocol"] == 90
         assert cats["reliability"] == 80
-        assert cats["maintenance"] == 68
+        assert cats["docs_maintenance"] == 68
         assert cats["security"] == 85
+
+    def test_agent_usability_included_when_present(self):
+        result = ScoreResult(
+            composite_score=80,
+            grade="B",
+            score_type="enhanced",
+            schema_quality_score=75,
+            agent_usability_score=82,
+            server_info=ServerInfo(name="test"),
+        )
+        output = format_json(result)
+        data = json.loads(output)
+        assert data["score"]["categories"]["agent_usability"] == 82
+
+    def test_agent_usability_omitted_when_none(self, sample_result):
+        output = format_json(sample_result)
+        data = json.loads(output)
+        assert "agent_usability" not in data["score"]["categories"]
 
     def test_flags(self, sample_result):
         output = format_json(sample_result)
@@ -178,6 +213,13 @@ class TestJsonFormatter:
         data = json.loads(output)
         assert "probe" not in data
 
+    def test_links_included(self, sample_result):
+        output = format_json(sample_result)
+        data = json.loads(output)
+        assert data["links"]["scoreboard"] == "https://mcpscoreboard.com"
+        assert data["links"]["guides"] == "https://mcpscoreboard.com/build"
+        assert data["links"]["monitoring"] == "https://patchworkmcp.com"
+
 
 class TestMarkdownFormatter:
     def test_header(self, sample_result):
@@ -192,7 +234,7 @@ class TestMarkdownFormatter:
     def test_category_table(self, sample_result):
         output = format_markdown(sample_result)
         assert "| Category | Score | Weight |" in output
-        assert "Schema & Documentation" in output
+        assert "Schema Quality" in output
         assert "75" in output
 
     def test_flags(self, sample_result):
@@ -204,13 +246,14 @@ class TestMarkdownFormatter:
         assert "## Probe Results" in output
         assert "Tools Found**: 5" in output
 
-    def test_footer(self, sample_result):
+    def test_footer_has_cta(self, sample_result):
         output = format_markdown(sample_result)
+        assert "mcpscoreboard.com/build" in output
         assert "patchworkmcp.com" in output
 
     def test_partial_result(self, partial_result):
         output = format_markdown(partial_result)
-        assert "Partial score" in output
+        assert "No score computed" in output
 
     def test_empty_result(self, empty_result):
         output = format_markdown(empty_result)
@@ -230,3 +273,20 @@ class TestMarkdownFormatter:
         )
         output = format_markdown(result)
         assert "## Flags" not in output
+
+    def test_enhanced_weights(self):
+        result = ScoreResult(
+            composite_score=80,
+            grade="B",
+            score_type="enhanced",
+            schema_quality_score=75,
+            protocol_score=85,
+            reliability_score=80,
+            docs_maintenance_score=70,
+            security_score=90,
+            agent_usability_score=78,
+            server_info=ServerInfo(name="test"),
+        )
+        output = format_markdown(result)
+        assert "Agent Usability" in output
+        assert "15%" in output

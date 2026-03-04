@@ -12,6 +12,16 @@ from mcp_score import __version__
 
 def format_json(result: ScoreResult, *, target: str = "") -> str:
     """Serialize a ScoreResult to JSON."""
+    categories = {
+        "schema_quality": result.schema_quality_score,
+        "protocol": result.protocol_score,
+        "reliability": result.reliability_score,
+        "docs_maintenance": result.docs_maintenance_score,
+        "security": result.security_score,
+    }
+    if result.agent_usability_score is not None:
+        categories["agent_usability"] = result.agent_usability_score
+
     output = {
         "version": __version__,
         "target": target,
@@ -20,13 +30,7 @@ def format_json(result: ScoreResult, *, target: str = "") -> str:
             "composite": result.composite_score,
             "grade": result.grade,
             "type": result.score_type,
-            "categories": {
-                "schema_docs": result.schema_docs_score,
-                "protocol": result.protocol_score,
-                "reliability": result.reliability_score,
-                "maintenance": result.maintenance_score,
-                "security": result.security_score,
-            },
+            "categories": categories,
         },
         "flags": [
             {
@@ -42,6 +46,11 @@ def format_json(result: ScoreResult, *, target: str = "") -> str:
             "targets": result.targets,
             "publisher": result.publisher,
             "verified_publisher": result.verified_publisher,
+        },
+        "links": {
+            "scoreboard": "https://mcpscoreboard.com",
+            "guides": "https://mcpscoreboard.com/build",
+            "monitoring": "https://patchworkmcp.com",
         },
     }
 

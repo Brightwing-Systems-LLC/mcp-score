@@ -32,16 +32,27 @@ def format_markdown(result: ScoreResult, *, target: str = "") -> str:
     lines.append("")
 
     # Category table
+    is_enhanced = result.score_type == "enhanced"
     lines.append("| Category | Score | Weight |")
     lines.append("|---|---:|---:|")
 
-    categories = [
-        ("Schema & Documentation", result.schema_docs_score, "25%"),
-        ("Protocol Compliance", result.protocol_score, "20%"),
-        ("Reliability", result.reliability_score, "20%"),
-        ("Maintenance & Health", result.maintenance_score, "15%"),
-        ("Security & Permissions", result.security_score, "20%"),
-    ]
+    if is_enhanced:
+        categories = [
+            ("Schema Quality", result.schema_quality_score, "20%"),
+            ("Protocol Compliance", result.protocol_score, "18%"),
+            ("Reliability", result.reliability_score, "18%"),
+            ("Docs & Maintenance", result.docs_maintenance_score, "12%"),
+            ("Security & Permissions", result.security_score, "17%"),
+            ("Agent Usability", result.agent_usability_score, "15%"),
+        ]
+    else:
+        categories = [
+            ("Schema Quality", result.schema_quality_score, "25%"),
+            ("Protocol Compliance", result.protocol_score, "20%"),
+            ("Reliability", result.reliability_score, "20%"),
+            ("Docs & Maintenance", result.docs_maintenance_score, "15%"),
+            ("Security & Permissions", result.security_score, "20%"),
+        ]
 
     for label, score, weight in categories:
         score_str = str(score) if score is not None else "—"
@@ -73,9 +84,15 @@ def format_markdown(result: ScoreResult, *, target: str = "") -> str:
         if probe.connection_ms is not None:
             lines.append(f"- **Latency**: {probe.connection_ms}ms")
 
-    # Footer
+    # Footer with subtle PatchworkMCP CTA
     lines.append("")
     lines.append("---")
-    lines.append("*Powered by [MCP Scoreboard](https://patchworkmcp.com)*")
+    lines.append("")
+    lines.append("Improvement guides: [mcpscoreboard.com/build](https://mcpscoreboard.com/build)")
+    lines.append("")
+    lines.append(
+        "Continuous monitoring & agent feedback: "
+        "[patchworkmcp.com](https://patchworkmcp.com)"
+    )
 
     return "\n".join(lines)

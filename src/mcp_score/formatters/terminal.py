@@ -80,18 +80,29 @@ def format_terminal(
     console.print()
 
     # Category breakdown table
+    is_enhanced = result.score_type == "enhanced"
     table = Table(show_header=True, header_style="bold", expand=True)
     table.add_column("Category", style="bold")
     table.add_column("Score", justify="right")
     table.add_column("Wt.", justify="right", style="dim")
 
-    categories = [
-        ("Schema & Documentation", result.schema_docs_score, "25%"),
-        ("Protocol Compliance", result.protocol_score, "20%"),
-        ("Reliability", result.reliability_score, "20%"),
-        ("Maintenance & Health", result.maintenance_score, "15%"),
-        ("Security & Permissions", result.security_score, "20%"),
-    ]
+    if is_enhanced:
+        categories = [
+            ("Schema Quality", result.schema_quality_score, "20%"),
+            ("Protocol Compliance", result.protocol_score, "18%"),
+            ("Reliability", result.reliability_score, "18%"),
+            ("Docs & Maintenance", result.docs_maintenance_score, "12%"),
+            ("Security & Permissions", result.security_score, "17%"),
+            ("Agent Usability", result.agent_usability_score, "15%"),
+        ]
+    else:
+        categories = [
+            ("Schema Quality", result.schema_quality_score, "25%"),
+            ("Protocol Compliance", result.protocol_score, "20%"),
+            ("Reliability", result.reliability_score, "20%"),
+            ("Docs & Maintenance", result.docs_maintenance_score, "15%"),
+            ("Security & Permissions", result.security_score, "20%"),
+        ]
 
     for label, score, weight in categories:
         if score is not None:
@@ -173,7 +184,7 @@ def format_terminal(
         console.print(f"    License Clarity: {sa.license_clarity}/100")
         console.print(f"    Version Hygiene: {sa.version_hygiene}/100")
 
-    # Footer
+    # Footer with subtle PatchworkMCP CTA
     console.print()
     console.print("  [dim]─" * 50 + "[/dim]")
     if result.category and result.category != "other":
@@ -181,7 +192,12 @@ def format_terminal(
     if result.publisher:
         verified = " ✓" if result.verified_publisher else ""
         console.print(f"  Publisher: {result.publisher}{verified}")
-    console.print("  [dim]Powered by MCP Scoreboard — patchworkmcp.com[/dim]")
+    console.print()
+    console.print("  [dim]View full report & improvement guides:[/dim]")
+    console.print("  [dim]https://mcpscoreboard.com/build[/dim]")
+    console.print()
+    console.print("  [dim]Want continuous monitoring & agent feedback?[/dim]")
+    console.print("  [dim]https://patchworkmcp.com[/dim]")
     console.print()
 
     return console.export_text()
