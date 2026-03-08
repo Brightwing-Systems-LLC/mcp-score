@@ -43,6 +43,14 @@ def _check_threshold(grade: str, threshold: str) -> bool:
     help="Exit with code 1 if score is below GRADE.",
 )
 @click.option("--timeout", default=30, type=int, help="Probe timeout in seconds.")
+@click.option(
+    "--output",
+    "-o",
+    "output_path",
+    default=None,
+    type=click.Path(),
+    help="Save report to a file (markdown format).",
+)
 def main(
     target: str,
     extra_args: tuple[str, ...],
@@ -51,6 +59,7 @@ def main(
     verbose: bool,
     fail_below: str | None,
     timeout: int,
+    output_path: str | None,
 ) -> None:
     """Score an MCP server's quality.
 
@@ -74,6 +83,15 @@ def main(
             click.echo("Error: stdio target requires a command after '--'", err=True)
             click.echo("Example: mcp-score stdio -- python my_server.py", err=True)
             sys.exit(2)
+        # Warn if CLI options appear after -- (they get passed to the server, not mcp-score)
+        cli_flags = {"--format", "--verbose", "--repo", "--fail-below", "--timeout", "--output", "-o"}
+        swallowed = [a for a in args if a in cli_flags]
+        if swallowed:
+            click.echo(
+                f"Warning: {', '.join(swallowed)} after '--' will be passed to the server, "
+                f"not mcp-score. Place options before 'stdio --'.",
+                err=True,
+            )
         stdio_command = args
 
     try:
@@ -100,6 +118,16 @@ def main(
         from .formatters.terminal import format_terminal
 
         click.echo(format_terminal(result, target=target, verbose=verbose))
+
+    # Save to file
+    if output_path:
+        from .formatters.markdown import format_markdown
+
+        report = format_markdown(result, target=target)
+        with open(output_path, "w") as f:
+            f.write(report)
+            f.write("\n")
+        click.echo(f"Report saved to {output_path}", err=True)
 
     # Check threshold
     if fail_below:

@@ -84,15 +84,14 @@ def format_markdown(result: ScoreResult, *, target: str = "") -> str:
         if probe.connection_ms is not None:
             lines.append(f"- **Latency**: {probe.connection_ms}ms")
 
-    # Footer with subtle PatchworkMCP CTA
+    # Randomized CTA footer
+    from .cta import get_random_cta
+
+    hook, url, label = get_random_cta()
     lines.append("")
     lines.append("---")
     lines.append("")
-    lines.append("Improvement guides: [mcpscoreboard.com/build](https://mcpscoreboard.com/build)")
-    lines.append("")
-    lines.append(
-        "Continuous monitoring & agent feedback: "
-        "[patchworkmcp.com](https://patchworkmcp.com)"
-    )
+    lines.append(f"*{hook}*")
+    lines.append(f"[{label}]({url})")
 
     return "\n".join(lines)

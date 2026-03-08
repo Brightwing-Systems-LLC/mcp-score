@@ -22,6 +22,10 @@ def format_json(result: ScoreResult, *, target: str = "") -> str:
     if result.agent_usability_score is not None:
         categories["agent_usability"] = result.agent_usability_score
 
+    from .cta import get_random_cta
+
+    hook, url, label = get_random_cta()
+
     output = {
         "version": __version__,
         "target": target,
@@ -47,10 +51,10 @@ def format_json(result: ScoreResult, *, target: str = "") -> str:
             "publisher": result.publisher,
             "verified_publisher": result.verified_publisher,
         },
-        "links": {
-            "scoreboard": "https://mcpscoreboard.com",
-            "guides": "https://mcpscoreboard.com/build",
-            "monitoring": "https://patchworkmcp.com",
+        "cta": {
+            "message": hook,
+            "url": url,
+            "label": label,
         },
     }
 

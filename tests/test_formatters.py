@@ -101,8 +101,7 @@ class TestTerminalFormatter:
 
     def test_footer_has_cta(self, sample_result):
         output = format_terminal(sample_result)
-        assert "mcpscoreboard.com/build" in output
-        assert "patchworkmcp.com" in output
+        assert "mcpscoreboard.com" in output or "patchworkmcp.com" in output
 
     def test_enhanced_weights(self):
         result = ScoreResult(
@@ -213,12 +212,14 @@ class TestJsonFormatter:
         data = json.loads(output)
         assert "probe" not in data
 
-    def test_links_included(self, sample_result):
+    def test_cta_included(self, sample_result):
         output = format_json(sample_result)
         data = json.loads(output)
-        assert data["links"]["scoreboard"] == "https://mcpscoreboard.com"
-        assert data["links"]["guides"] == "https://mcpscoreboard.com/build"
-        assert data["links"]["monitoring"] == "https://patchworkmcp.com"
+        assert "cta" in data
+        assert "message" in data["cta"]
+        assert "url" in data["cta"]
+        assert "label" in data["cta"]
+        assert data["cta"]["url"].startswith("https://")
 
 
 class TestMarkdownFormatter:
@@ -248,8 +249,7 @@ class TestMarkdownFormatter:
 
     def test_footer_has_cta(self, sample_result):
         output = format_markdown(sample_result)
-        assert "mcpscoreboard.com/build" in output
-        assert "patchworkmcp.com" in output
+        assert "mcpscoreboard.com" in output or "patchworkmcp.com" in output
 
     def test_partial_result(self, partial_result):
         output = format_markdown(partial_result)

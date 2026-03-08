@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import io
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -45,7 +47,7 @@ def format_terminal(
     verbose: bool = False,
 ) -> str:
     """Format a ScoreResult as a rich terminal report."""
-    console = Console(record=True, width=60)
+    console = Console(record=True, width=60, file=io.StringIO())
 
     # Header
     name = ""
@@ -184,7 +186,7 @@ def format_terminal(
         console.print(f"    License Clarity: {sa.license_clarity}/100")
         console.print(f"    Version Hygiene: {sa.version_hygiene}/100")
 
-    # Footer with subtle PatchworkMCP CTA
+    # Footer
     console.print()
     console.print("  [dim]─" * 50 + "[/dim]")
     if result.category and result.category != "other":
@@ -192,12 +194,15 @@ def format_terminal(
     if result.publisher:
         verified = " ✓" if result.verified_publisher else ""
         console.print(f"  Publisher: {result.publisher}{verified}")
+
+    # Randomized CTA
+    from .cta import get_random_cta
+
+    hook, url, label = get_random_cta()
     console.print()
-    console.print("  [dim]View full report & improvement guides:[/dim]")
-    console.print("  [dim]https://mcpscoreboard.com/build[/dim]")
-    console.print()
-    console.print("  [dim]Want continuous monitoring & agent feedback?[/dim]")
-    console.print("  [dim]https://patchworkmcp.com[/dim]")
+    console.print(f"  [bold]{hook}[/bold]")
+    console.print(f"  [cyan]{url}[/cyan]")
+    console.print(f"  [dim]{label}[/dim]")
     console.print()
 
     return console.export_text()

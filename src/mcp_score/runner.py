@@ -16,6 +16,7 @@ from mcp_scoring_engine import (
     StaticAnalysis,
     compute_score,
 )
+from mcp_scoring_engine.probes.github_client import GitHubRateLimitExhausted
 from mcp_scoring_engine.probes.health import PROBE_TIMEOUT
 from mcp_scoring_engine.probes.protocol import DEEP_PROBE_TIMEOUT
 
@@ -73,18 +74,27 @@ def _build_server_info(
     if repo_url:
         info.repo_url = _parse_github_ref(repo_url)
 
-    # Extract name from target
-    if _is_github_target(target):
-        ref = target[len("github:"):]
-        if "/" in ref:
-            info.name = ref.split("/")[-1]
-    elif _is_http_target(target):
-        # Use domain as name
-        match = re.search(r"https?://([^:/]+)", target)
-        if match:
-            info.name = match.group(1)
-    elif stdio_command:
-        info.name = stdio_command[-1] if stdio_command else "stdio-server"
+    # Extract name — prefer server-reported name from probe
+    if deep_probe and deep_probe.server_name:
+        info.name = deep_probe.server_name
+
+    if not info.name:
+        if _is_github_target(target):
+            ref = target[len("github:"):]
+            if "/" in ref:
+                info.name = ref.split("/")[-1]
+        elif _is_http_target(target):
+            match = re.search(r"https?://([^:/]+)", target)
+            if match:
+                info.name = match.group(1)
+        elif stdio_command:
+            # Use the main command/package name, skip flags and options
+            for arg in stdio_command:
+                if not arg.startswith("-"):
+                    info.name = arg.split("/")[-1]
+                    break
+            if not info.name:
+                info.name = "stdio-server"
 
     # Enrich from static analysis
     if static_result and static_result.last_commit_at:
@@ -153,7 +163,22 @@ def run_score(
             resolved = None
 
         if resolved:
-            static_result = analyze_repo(resolved)
+            try:
+                static_result = analyze_repo(resolved)
+            except GitHubRateLimitExhausted:
+                if not run_deep:
+                    raise ScoreError(
+                        "GitHub API rate limit exhausted. "
+                        "Set GITHUB_TOKEN env var for 5,000 req/hr (vs 60 unauthenticated)."
+                    )
+                # If we also have a deep probe, continue without static analysis
+                import sys
+
+                print(
+                    "Warning: GitHub API rate limit exhausted, skipping static analysis. "
+                    "Set GITHUB_TOKEN for higher limits.",
+                    file=sys.stderr,
+                )
 
     # ── Build server info and score ───────────────────────────────────
     server_info = _build_server_info(
